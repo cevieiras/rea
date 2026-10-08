@@ -139,21 +139,25 @@ const flattenRootUnion = (
 
   // The canonical Zod parser still enforces branch validation at invocation.
   const { anyOf: _anyOf, required: _required, ...root } = value;
-  const required = branches
-    .map((branch) =>
-      Array.isArray(branch.required)
-        ? branch.required.filter(
-            (item): item is string => typeof item === "string",
-          )
-        : [],
-    )
-    .reduce((common, current) =>
-      common.filter((name) => current.includes(name)),
-    );
+  const requiredByBranch = branches.map((branch) =>
+    Array.isArray(branch.required)
+      ? branch.required.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [],
+  );
+  const required = requiredByBranch.reduce((common, current) =>
+    common.filter((name) => current.includes(name)),
+  );
+  const minProperties = Math.max(
+    typeof root.minProperties === "number" ? root.minProperties : 0,
+    Math.min(...requiredByBranch.map((names) => names.length)),
+  );
   return {
     ...root,
     type: "object",
     properties,
+    ...(minProperties > 0 ? { minProperties } : {}),
     ...(required.length > 0 ? { required } : {}),
     ...(branches.every((branch) => branch.additionalProperties === false)
       ? { additionalProperties: false }
