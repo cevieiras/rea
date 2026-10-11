@@ -36,4 +36,19 @@ export interface AndroidManifestFacts {
 export type AndroidManifestReadFailure =
   | { readonly kind: "truncated"; readonly message: string }
   | { readonly kind: "malformed"; readonly message: string }
-  | { readonly kind: "limit_exceeded"; readonly message: string };
+  | { readonly kind: "limit_exceeded"; readonly message: string }
+  | { readonly kind: "not_found"; readonly message: string }
+  /** The ZIP container itself could not be read, before any manifest bytes. */
+  | {
+      readonly kind: "archive_unreadable";
+      /** Why the container failed; I/O and availability stay distinct from format. */
+      readonly reason: ArchiveFailureReason;
+      readonly message: string;
+    };
+
+export type ArchiveFailureReason =
+  | "format"
+  | "integrity"
+  | "path"
+  | "io"
+  | "unavailable";
